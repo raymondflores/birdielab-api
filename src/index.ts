@@ -3,7 +3,7 @@ import express from "express";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express4";
 import { buildSchema } from "type-graphql";
-import { ProfileResolver } from "./resolvers/ProfileResolver";
+import { UserResolver } from "./resolvers/UserResolver";
 import { CoachResolver } from "./resolvers/CoachResolver";
 import { CoachAvailabilityResolver } from "./resolvers/CoachAvailabilityResolver";
 import { supabase } from "./config/supabase";
@@ -24,7 +24,7 @@ async function startServer() {
 
   // Build the GraphQL schema
   const schema = await buildSchema({
-    resolvers: [ProfileResolver, CoachResolver, CoachAvailabilityResolver],
+    resolvers: [UserResolver, CoachResolver, CoachAvailabilityResolver],
     validate: false,
     authChecker: ({ context }) => {
       // Check if user is authenticated

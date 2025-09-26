@@ -20,9 +20,9 @@ export class CoachAvailabilityResolver {
     try {
       // First get the user's profile
       const { data: profile, error: profileError } = await supabaseAdmin
-        .from('profiles')
+        .from('users')
         .select('id')
-        .eq('user_id', context.user.id)
+        .eq('auth_id', context.user.id)
         .single();
       
       if (profileError || !profile) {
@@ -33,7 +33,7 @@ export class CoachAvailabilityResolver {
       const { data: coach, error: coachError } = await supabaseAdmin
         .from('coaches')
         .select('id')
-        .eq('profile_id', profile.id)
+        .eq('user_id', profile.id)
         .single();
       
       if (coachError || !coach) {
@@ -117,9 +117,9 @@ export class CoachAvailabilityResolver {
     try {
       // First get the user's profile
       const { data: profile, error: profileError } = await supabaseAdmin
-        .from('profiles')
+        .from('users')
         .select('id')
-        .eq('user_id', context.user.id)
+        .eq('auth_id', context.user.id)
         .single();
       
       if (profileError || !profile) {
@@ -130,7 +130,7 @@ export class CoachAvailabilityResolver {
       const { data: coach, error: coachError } = await supabaseAdmin
         .from('coaches')
         .select('id')
-        .eq('profile_id', profile.id)
+        .eq('user_id', profile.id)
         .single();
       
       if (coachError || !coach) {
@@ -211,9 +211,9 @@ export class CoachAvailabilityResolver {
     try {
       // First get the user's profile
       const { data: profile, error: profileError } = await supabaseAdmin
-        .from('profiles')
+        .from('users')
         .select('id')
-        .eq('user_id', context.user.id)
+        .eq('auth_id', context.user.id)
         .single();
       
       if (profileError || !profile) {
@@ -224,7 +224,7 @@ export class CoachAvailabilityResolver {
       const { data: coach, error: coachError } = await supabaseAdmin
         .from('coaches')
         .select('id')
-        .eq('profile_id', profile.id)
+        .eq('user_id', profile.id)
         .single();
       
       if (coachError || !coach) {
@@ -310,9 +310,9 @@ export class CoachAvailabilityResolver {
     try {
       // First get the user's profile
       const { data: profile, error: profileError } = await supabaseAdmin
-        .from('profiles')
+        .from('users')
         .select('id')
-        .eq('user_id', context.user.id)
+        .eq('auth_id', context.user.id)
         .single();
       
       if (profileError || !profile) {
@@ -323,7 +323,7 @@ export class CoachAvailabilityResolver {
       const { data: coach, error: coachError } = await supabaseAdmin
         .from('coaches')
         .select('id')
-        .eq('profile_id', profile.id)
+        .eq('user_id', profile.id)
         .single();
       
       if (coachError || !coach) {

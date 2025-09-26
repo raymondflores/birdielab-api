@@ -7,7 +7,7 @@ export class Coach {
   id: string;
 
   @Field()
-  profile_id: string;
+  user_id: string;
 
   @Field()
   bio: string;
@@ -18,9 +18,9 @@ export class Coach {
   @Field(() => [CoachAvailability], { nullable: true })
   availabilities?: CoachAvailability[];
 
-  constructor(id: string, profile_id: string, bio: string, created_at: string) {
+  constructor(id: string, user_id: string, bio: string, created_at: string) {
     this.id = id;
-    this.profile_id = profile_id;
+    this.user_id = user_id;
     this.bio = bio;
     this.created_at = created_at;
   }

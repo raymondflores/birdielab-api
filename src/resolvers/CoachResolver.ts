@@ -19,9 +19,9 @@ export class CoachResolver {
     try {
       // First get the user's profile
       const { data: profile, error: profileError } = await supabaseAdmin
-        .from('profiles')
+        .from('users')
         .select('id')
-        .eq('user_id', context.user.id)
+        .eq('auth_id', context.user.id)
         .single();
       
       if (profileError || !profile) {
@@ -32,7 +32,7 @@ export class CoachResolver {
       const { data: existingCoach, error: checkError } = await supabaseAdmin
         .from('coaches')
         .select('id')
-        .eq('profile_id', profile.id)
+        .eq('user_id', profile.id)
         .single();
       
       if (!checkError && existingCoach) {
@@ -43,7 +43,7 @@ export class CoachResolver {
       const { data: coach, error: coachError } = await supabaseAdmin
         .from('coaches')
         .insert({
-          profile_id: profile.id,
+          user_id: profile.id,
           bio: bio
         })
         .select()
@@ -55,7 +55,7 @@ export class CoachResolver {
       
       return new Coach(
         coach.id,
-        coach.profile_id,
+        coach.user_id,
         coach.bio,
         coach.created_at
       );
@@ -74,9 +74,9 @@ export class CoachResolver {
     try {
       // First get the user's profile
       const { data: profile, error: profileError } = await supabaseAdmin
-        .from('profiles')
+        .from('users')
         .select('id')
-        .eq('user_id', context.user.id)
+        .eq('auth_id', context.user.id)
         .single();
       
       if (profileError || !profile) {
@@ -87,7 +87,7 @@ export class CoachResolver {
       const { data: coach, error: coachError } = await supabaseAdmin
         .from('coaches')
         .update({ bio: bio })
-        .eq('profile_id', profile.id)
+        .eq('user_id', profile.id)
         .select()
         .single();
       
@@ -97,7 +97,7 @@ export class CoachResolver {
       
       return coach ? new Coach(
         coach.id,
-        coach.profile_id,
+        coach.user_id,
         coach.bio,
         coach.created_at
       ) : null;

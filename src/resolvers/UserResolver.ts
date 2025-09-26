@@ -1,5 +1,5 @@
 import { Resolver, Query, Mutation, Arg, Int, Ctx, Authorized, FieldResolver, Root } from "type-graphql";
-import { Profile } from "../entities/Profile";
+import { User } from "../entities/User";
 import { Coach } from "../entities/Coach";
 import { supabaseAdmin } from "../config/supabase";
 import { Request } from "express";
@@ -9,30 +9,30 @@ interface Context {
   user: any;
 }
 
-@Resolver(Profile)
-export class ProfileResolver {
+@Resolver(User)
+export class UserResolver {
   @Authorized()
-  @Query(() => Profile, { nullable: true })
-  async getCurrentProfile(@Ctx() context: Context): Promise<Profile | null> {
+  @Query(() => User, { nullable: true })
+  async getCurrentUser(@Ctx() context: Context): Promise<User | null> {
     try {
       // Get the user's profile
-      const { data: profile, error: profileError } = await supabaseAdmin
-        .from('profiles')
+      const { data: user, error: userError } = await supabaseAdmin
+        .from('users')
         .select('*')
-        .eq('user_id', context.user.id)
+        .eq('auth_id', context.user.id)
         .single();
       
-      if (profileError) {
+      if (userError) {
         return null;
       }
       
-      return profile ? new Profile(
-        profile.id,
-        profile.user_id,
-        profile.name,
-        profile.location,
-        profile.handicap,
-        profile.created_at
+      return user ? new User(
+        user.id,
+        user.auth_id,
+        user.name,
+        user.location,
+        user.handicap,
+        user.created_at
       ) : null;
       
     } catch (error) {
@@ -41,13 +41,13 @@ export class ProfileResolver {
   }
 
   @Authorized()
-  @Mutation(() => Profile, { nullable: true })
-  async updateProfile(
+  @Mutation(() => User, { nullable: true })
+  async updateUser(
     @Ctx() context: Context,
     @Arg("name", { nullable: true }) name?: string,
     @Arg("location", { nullable: true }) location?: string,
     @Arg("handicap", () => Int, { nullable: true }) handicap?: number
-  ): Promise<Profile | null> {    
+  ): Promise<User | null> {    
     try {      
       // Prepare update data
       const updateData: any = {};
@@ -56,57 +56,57 @@ export class ProfileResolver {
       if (location !== undefined) updateData.location = location;
       if (handicap !== undefined) updateData.handicap = handicap;
       
-      // Check if profile exists, if not create it
-      const { data: existingProfile, error: fetchError } = await supabaseAdmin
-        .from('profiles')
+      // Check if user exists, if not create it
+      const { data: existingUser, error: fetchError } = await supabaseAdmin
+        .from('users')
         .select('*')
-        .eq('user_id', context.user.id)
+        .eq('auth_id', context.user.id)
         .single();
       
       if (fetchError && fetchError.code !== 'PGRST116') {
-        throw new Error('Failed to fetch profile');
+        throw new Error('Failed to fetch user');
       }
       
       let result;
-      if (existingProfile) {
-        // Update existing profile
+      if (existingUser) {
+        // Update existing user
         const { data, error } = await supabaseAdmin
-          .from('profiles')
+          .from('users')
           .update(updateData)
-          .eq('user_id', context.user.id)
+          .eq('auth_id', context.user.id)
           .select()
           .single();
         
         if (error) {
-          throw new Error('Failed to update profile');
+          throw new Error('Failed to update user');
         }
         
         result = data;
       } else {
-        // Create new profile
-        const profileData = {
-          user_id: context.user.id,
+        // Create new user
+        const userData = {
+          auth_id: context.user.id,
           name: name,
           location: location,
           handicap: handicap,
         };
         
         const { data, error } = await supabaseAdmin
-          .from('profiles')
-          .insert(profileData)
+          .from('users')
+          .insert(userData)
           .select()
           .single();
         
         if (error) {
-          throw new Error('Failed to create profile');
+          throw new Error('Failed to create user');
         }
         
         result = data;
       }
       
-      return result ? new Profile(
+      return result ? new User(
         result.id,
-        result.user_id,
+        result.auth_id,
         result.name,
         result.location,
         result.handicap,
@@ -114,17 +114,17 @@ export class ProfileResolver {
       ) : null;
       
     } catch (error) {
-      throw new Error('Failed to update profile');
+      throw new Error('Failed to update user');
     }
   }
 
   @FieldResolver(() => Coach, { nullable: true })
-  async coach(@Root() profile: Profile): Promise<Coach | null> {
+  async coach(@Root() user: User): Promise<Coach | null> {
     try {
       const { data: coach, error } = await supabaseAdmin
         .from('coaches')
         .select('*')
-        .eq('profile_id', profile.id)
+        .eq('user_id', user.id)
         .single();
       
       if (error || !coach) {
@@ -133,7 +133,7 @@ export class ProfileResolver {
       
       return new Coach(
         coach.id,
-        coach.profile_id,
+        coach.user_id,
         coach.bio,
         coach.created_at
       );
@@ -142,21 +142,21 @@ export class ProfileResolver {
     }
   }
 
-  @Query(() => [Profile])
-  async coaches(): Promise<Profile[]> {
+  @Query(() => [User])
+  async coaches(): Promise<User[]> {
     try {
-      const { data: profiles, error } = await supabaseAdmin
-        .from('profiles')
+      const { data: users, error } = await supabaseAdmin
+        .from('users')
         .select(`
           id,
-          user_id,
+          auth_id,
           name,
           location,
           handicap,
           created_at,
           coaches!inner(
             id,
-            profile_id,
+            user_id,
             bio,
             created_at
           )
@@ -164,20 +164,20 @@ export class ProfileResolver {
         .order('created_at', { ascending: false });
       
       if (error) {
-        throw new Error('Failed to fetch coach profiles');
+        throw new Error('Failed to fetch coach users');
       }
       
-      return profiles.map((profile: any) => new Profile(
-        profile.id,
-        profile.user_id,
-        profile.name,
-        profile.location,
-        profile.handicap,
-        profile.created_at
+      return users.map((user: any) => new User(
+        user.id,
+        user.auth_id,
+        user.name,
+        user.location,
+        user.handicap,
+        user.created_at
       ));
       
     } catch (error) {
-      throw new Error(error instanceof Error ? error.message : 'Failed to fetch coach profiles');
+      throw new Error(error instanceof Error ? error.message : 'Failed to fetch coach users');
     }
   }
 }
