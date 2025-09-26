@@ -16,9 +16,9 @@ export class ProfileResolver {
     try {
       // Get the user's profile
       const { data: profile, error: profileError } = await supabaseAdmin
-        .from('profile')
+        .from('profiles')
         .select('*')
-        .eq('id', context.user.id)
+        .eq('user_id', context.user.id)
         .single();
       
       if (profileError) {
@@ -27,9 +27,11 @@ export class ProfileResolver {
       
       return profile ? new Profile(
         profile.id,
+        profile.user_id,
         profile.name,
         profile.location,
-        profile.handicap
+        profile.handicap,
+        profile.created_at
       ) : null;
       
     } catch (error) {
@@ -55,9 +57,9 @@ export class ProfileResolver {
       
       // Check if profile exists, if not create it
       const { data: existingProfile, error: fetchError } = await supabaseAdmin
-        .from('profile')
+        .from('profiles')
         .select('*')
-        .eq('id', context.user.id)
+        .eq('user_id', context.user.id)
         .single();
       
       if (fetchError && fetchError.code !== 'PGRST116') {
@@ -68,9 +70,9 @@ export class ProfileResolver {
       if (existingProfile) {
         // Update existing profile
         const { data, error } = await supabaseAdmin
-          .from('profile')
+          .from('profiles')
           .update(updateData)
-          .eq('id', context.user.id)
+          .eq('user_id', context.user.id)
           .select()
           .single();
         
@@ -82,14 +84,14 @@ export class ProfileResolver {
       } else {
         // Create new profile
         const profileData = {
-          id: context.user.id,
-          name: name || '',
-          location: location || '',
-          handicap: handicap || 0,
+          user_id: context.user.id,
+          name: name,
+          location: location,
+          handicap: handicap,
         };
         
         const { data, error } = await supabaseAdmin
-          .from('profile')
+          .from('profiles')
           .insert(profileData)
           .select()
           .single();
@@ -103,9 +105,11 @@ export class ProfileResolver {
       
       return result ? new Profile(
         result.id,
+        result.user_id,
         result.name,
         result.location,
-        result.handicap
+        result.handicap,
+        result.created_at
       ) : null;
       
     } catch (error) {
