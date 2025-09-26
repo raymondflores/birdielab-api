@@ -1,5 +1,6 @@
-import { Resolver, Query, Mutation, Arg, Int, Ctx, Authorized } from "type-graphql";
+import { Resolver, Query, Mutation, Arg, Int, Ctx, Authorized, FieldResolver, Root } from "type-graphql";
 import { Profile } from "../entities/Profile";
+import { Coach } from "../entities/Coach";
 import { supabaseAdmin } from "../config/supabase";
 import { Request } from "express";
 
@@ -114,6 +115,69 @@ export class ProfileResolver {
       
     } catch (error) {
       throw new Error('Failed to update profile');
+    }
+  }
+
+  @FieldResolver(() => Coach, { nullable: true })
+  async coach(@Root() profile: Profile): Promise<Coach | null> {
+    try {
+      const { data: coach, error } = await supabaseAdmin
+        .from('coaches')
+        .select('*')
+        .eq('profile_id', profile.id)
+        .single();
+      
+      if (error || !coach) {
+        return null;
+      }
+      
+      return new Coach(
+        coach.id,
+        coach.profile_id,
+        coach.bio,
+        coach.created_at
+      );
+    } catch (error) {
+      return null;
+    }
+  }
+
+  @Query(() => [Profile])
+  async coaches(): Promise<Profile[]> {
+    try {
+      const { data: profiles, error } = await supabaseAdmin
+        .from('profiles')
+        .select(`
+          id,
+          user_id,
+          name,
+          location,
+          handicap,
+          created_at,
+          coaches!inner(
+            id,
+            profile_id,
+            bio,
+            created_at
+          )
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        throw new Error('Failed to fetch coach profiles');
+      }
+      
+      return profiles.map((profile: any) => new Profile(
+        profile.id,
+        profile.user_id,
+        profile.name,
+        profile.location,
+        profile.handicap,
+        profile.created_at
+      ));
+      
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Failed to fetch coach profiles');
     }
   }
 }

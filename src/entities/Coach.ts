@@ -1,4 +1,5 @@
 import { ObjectType, Field, ID } from "type-graphql";
+import { CoachAvailability } from "./CoachAvailability";
 
 @ObjectType()
 export class Coach {
@@ -13,6 +14,9 @@ export class Coach {
 
   @Field()
   created_at: string;
+
+  @Field(() => [CoachAvailability], { nullable: true })
+  availabilities?: CoachAvailability[];
 
   constructor(id: string, profile_id: string, bio: string, created_at: string) {
     this.id = id;

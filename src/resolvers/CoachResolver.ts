@@ -64,4 +64,47 @@ export class CoachResolver {
       throw new Error(error instanceof Error ? error.message : 'Failed to become a coach');
     }
   }
+
+  @Authorized()
+  @Mutation(() => Coach, { nullable: true })
+  async updateCoachProfile(
+    @Ctx() context: Context,
+    @Arg("bio") bio: string
+  ): Promise<Coach | null> {
+    try {
+      // First get the user's profile
+      const { data: profile, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('user_id', context.user.id)
+        .single();
+      
+      if (profileError || !profile) {
+        throw new Error('User profile not found.');
+      }
+
+      // Update coach bio
+      const { data: coach, error: coachError } = await supabaseAdmin
+        .from('coaches')
+        .update({ bio: bio })
+        .eq('profile_id', profile.id)
+        .select()
+        .single();
+      
+      if (coachError) {
+        throw new Error('Failed to update coach profile');
+      }
+      
+      return coach ? new Coach(
+        coach.id,
+        coach.profile_id,
+        coach.bio,
+        coach.created_at
+      ) : null;
+      
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Failed to update coach profile');
+    }
+  }
+
 }

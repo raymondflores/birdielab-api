@@ -5,6 +5,7 @@ import { expressMiddleware } from "@as-integrations/express4";
 import { buildSchema } from "type-graphql";
 import { ProfileResolver } from "./resolvers/ProfileResolver";
 import { CoachResolver } from "./resolvers/CoachResolver";
+import { CoachAvailabilityResolver } from "./resolvers/CoachAvailabilityResolver";
 import { supabase } from "./config/supabase";
 import dotenv from "dotenv";
 
@@ -23,7 +24,7 @@ async function startServer() {
 
   // Build the GraphQL schema
   const schema = await buildSchema({
-    resolvers: [ProfileResolver, CoachResolver],
+    resolvers: [ProfileResolver, CoachResolver, CoachAvailabilityResolver],
     validate: false,
     authChecker: ({ context }) => {
       // Check if user is authenticated
