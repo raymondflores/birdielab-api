@@ -296,7 +296,7 @@ export class LessonResolver {
 
   @Authorized()
   @Query(() => [Lesson])
-  async getMyLessons(
+  async getMyStudentLessons(
     @Ctx() context: Context
   ): Promise<Lesson[]> {
     try {
@@ -311,15 +311,15 @@ export class LessonResolver {
         throw new Error('User not found.');
       }
 
-      // Get lessons where user is either student or coach
+      // Get lessons where user is the student
       const { data: lessons, error } = await supabaseAdmin
         .from('lessons')
         .select('*')
-        .or(`student_id.eq.${currentUser.id},coach_id.eq.${currentUser.id}`)
+        .eq('student_id', currentUser.id)
         .order('start_time');
       
       if (error) {
-        throw new Error('Failed to fetch lessons');
+        throw new Error('Failed to fetch student lessons');
       }
       
       return lessons.map((lesson: any) => new Lesson(
@@ -334,7 +334,62 @@ export class LessonResolver {
       ));
       
     } catch (error) {
-      throw new Error(error instanceof Error ? error.message : 'Failed to fetch lessons');
+      throw new Error(error instanceof Error ? error.message : 'Failed to fetch student lessons');
+    }
+  }
+
+  @Authorized()
+  @Query(() => [Lesson])
+  async getMyCoachLessons(
+    @Ctx() context: Context
+  ): Promise<Lesson[]> {
+    try {
+      // First get the current user
+      const { data: currentUser, error: userError } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('auth_id', context.user.id)
+        .single();
+      
+      if (userError || !currentUser) {
+        throw new Error('User not found.');
+      }
+
+      // Check if the user is a coach
+      const { data: coach, error: coachError } = await supabaseAdmin
+        .from('coaches')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .single();
+      
+      if (coachError || !coach) {
+        throw new Error('User is not a coach.');
+      }
+
+      // Get lessons where user is the coach
+      const { data: lessons, error } = await supabaseAdmin
+        .from('lessons')
+        .select('*')
+        .eq('coach_id', coach.id)
+        .order('start_time');
+      
+      if (error) {
+        throw new Error('Failed to fetch coach lessons');
+      }
+      
+      return lessons.map((lesson: any) => new Lesson(
+        lesson.id,
+        lesson.coach_id,
+        lesson.student_id,
+        lesson.start_time,
+        lesson.end_time,
+        lesson.status,
+        lesson.created_at,
+        lesson.updated_at
+      ));
+      
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Failed to fetch coach lessons');
     }
   }
 
@@ -428,12 +483,6 @@ export class LessonResolver {
     timezone?: string
   ): TimeSlot[] {
     const slots: TimeSlot[] = [];
-    console.log('Generating time slots for:', date);
-    console.log('Availability start:', availabilityStart);
-    console.log('Availability end:', availabilityEnd);
-    console.log('Timezone:', timezone);
-    console.log('Duration minutes:', durationMinutes);
-    console.log('Existing lessons:', existingLessons); 
     
     // Parse availability times and handle timezone properly
     let availabilityStartTime: Date;
@@ -502,23 +551,35 @@ export class LessonResolver {
   @FieldResolver(() => User, { nullable: true })
   async coach(@Root() lesson: Lesson): Promise<User | null> {
     try {
-      const { data: coach, error } = await supabaseAdmin
-        .from('users')
-        .select('*')
+      // First get the coach record to find the user_id
+      const { data: coachRecord, error: coachError } = await supabaseAdmin
+        .from('coaches')
+        .select('user_id')
         .eq('id', lesson.coach_id)
         .single();
       
-      if (error || !coach) {
+      if (coachError || !coachRecord) {
+        return null;
+      }
+      
+      // Then get the user record
+      const { data: user, error: userError } = await supabaseAdmin
+        .from('users')
+        .select('*')
+        .eq('id', coachRecord.user_id)
+        .single();
+      
+      if (userError || !user) {
         return null;
       }
       
       return new User(
-        coach.id,
-        coach.auth_id,
-        coach.name,
-        coach.location,
-        coach.handicap,
-        coach.created_at
+        user.id,
+        user.auth_id,
+        user.name,
+        user.location,
+        user.handicap,
+        user.created_at
       );
     } catch (error) {
       return null;

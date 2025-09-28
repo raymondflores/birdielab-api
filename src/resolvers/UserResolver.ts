@@ -142,9 +142,21 @@ export class UserResolver {
     }
   }
 
+  @Authorized()
   @Query(() => [User])
-  async coaches(): Promise<User[]> {
+  async coaches(@Ctx() context: Context): Promise<User[]> {
     try {
+      // First get the current user to exclude them from results
+      const { data: currentUser, error: userError } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('auth_id', context.user.id)
+        .single();
+      
+      if (userError || !currentUser) {
+        throw new Error('User not found.');
+      }
+
       const { data: users, error } = await supabaseAdmin
         .from('users')
         .select(`
@@ -161,6 +173,7 @@ export class UserResolver {
             created_at
           )
         `)
+        .neq('id', currentUser.id) // Exclude current user
         .order('created_at', { ascending: false });
       
       if (error) {
