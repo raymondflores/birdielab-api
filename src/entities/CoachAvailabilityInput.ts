@@ -10,6 +10,9 @@ export class CreateCoachAvailabilityInput {
 
   @Field()
   end_time!: string; // TIME format (HH:MM:SS)
+
+  @Field({ nullable: true })
+  timezone?: string; // Timezone text (e.g., "America/New_York", "EST", "UTC-5")
 }
 
 @InputType()
@@ -22,6 +25,9 @@ export class UpdateCoachAvailabilityInput {
 
   @Field({ nullable: true })
   end_time?: string;
+
+  @Field({ nullable: true })
+  timezone?: string;
 }
 
 @InputType()

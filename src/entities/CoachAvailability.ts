@@ -18,6 +18,9 @@ export class CoachAvailability {
   @Field()
   end_time: string; // TIME format (HH:MM:SS)
 
+  @Field({ nullable: true })
+  timezone?: string; // Timezone text (e.g., "America/New_York", "EST", "UTC-5")
+
   @Field()
   created_at: string;
 
@@ -34,7 +37,8 @@ export class CoachAvailability {
     start_time: string,
     end_time: string,
     created_at: string,
-    updated_at: string
+    updated_at: string,
+    timezone?: string
   ) {
     this.id = id;
     this.coach_id = coach_id;
@@ -43,5 +47,6 @@ export class CoachAvailability {
     this.end_time = end_time;
     this.created_at = created_at;
     this.updated_at = updated_at;
+    this.timezone = timezone;
   }
 }

@@ -83,7 +83,8 @@ export class CoachAvailabilityResolver {
           coach_id: coach.id,
           day_of_week: input.day_of_week,
           start_time: input.start_time,
-          end_time: input.end_time
+          end_time: input.end_time,
+          timezone: input.timezone
         })
         .select()
         .single();
@@ -99,7 +100,8 @@ export class CoachAvailabilityResolver {
         availability.start_time,
         availability.end_time,
         availability.created_at,
-        availability.updated_at
+        availability.updated_at,
+        availability.timezone
       );
       
     } catch (error) {
@@ -175,6 +177,7 @@ export class CoachAvailabilityResolver {
       if (input.day_of_week !== undefined) updateData.day_of_week = input.day_of_week;
       if (input.start_time !== undefined) updateData.start_time = input.start_time;
       if (input.end_time !== undefined) updateData.end_time = input.end_time;
+      if (input.timezone !== undefined) updateData.timezone = input.timezone;
 
       const { data: availability, error: availabilityError } = await supabaseAdmin
         .from('coach_availabilities')
@@ -194,7 +197,8 @@ export class CoachAvailabilityResolver {
         availability.start_time,
         availability.end_time,
         availability.created_at,
-        availability.updated_at
+        availability.updated_at,
+        availability.timezone
       ) : null;
       
     } catch (error) {
@@ -294,7 +298,8 @@ export class CoachAvailabilityResolver {
         av.start_time,
         av.end_time,
         av.created_at,
-        av.updated_at
+        av.updated_at,
+        av.timezone
       ));
       
     } catch (error) {
@@ -349,7 +354,8 @@ export class CoachAvailabilityResolver {
         av.start_time,
         av.end_time,
         av.created_at,
-        av.updated_at
+        av.updated_at,
+        av.timezone
       ));
       
     } catch (error) {

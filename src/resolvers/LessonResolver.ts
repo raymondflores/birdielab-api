@@ -31,19 +31,16 @@ export class LessonResolver {
         throw new Error('User not found. Please create a profile first.');
       }
 
-      // Validate that the coach exists and get the user_id
+      // Validate that the coach exists
       const { data: coach, error: coachError } = await supabaseAdmin
         .from('coaches')
-        .select('id, user_id')
+        .select('id')
         .eq('id', input.coach_id)
         .single();
       
       if (coachError || !coach) {
         throw new Error('Coach not found.');
       }
-
-      // Convert coach_id to user_id for the lesson
-      const coachUserId = coach.user_id;
 
       // Validate time inputs
       const startTime = new Date(input.start_time);
@@ -61,7 +58,7 @@ export class LessonResolver {
       const { data: overlappingLessons } = await supabaseAdmin
         .from('lessons')
         .select('id')
-        .eq('coach_id', coachUserId) // Use the converted user_id
+        .eq('coach_id', input.coach_id) // Use the original coach_id
         .or(`and(start_time.lt.${input.end_time},end_time.gt.${input.start_time})`);
       
       if (overlappingLessons && overlappingLessons.length > 0) {
@@ -83,7 +80,7 @@ export class LessonResolver {
       const { data: lesson, error: lessonError } = await supabaseAdmin
         .from('lessons')
         .insert({
-          coach_id: coachUserId, // Use the converted user_id instead of coach_id
+          coach_id: input.coach_id, // Use the original coach_id
           student_id: currentUser.id,
           start_time: input.start_time,
           end_time: input.end_time,
@@ -369,7 +366,7 @@ export class LessonResolver {
       // Get coach's availability for this day of week
       const { data: availability, error: availabilityError } = await supabaseAdmin
         .from('coach_availabilities')
-        .select('start_time, end_time')
+        .select('start_time, end_time, timezone')
         .eq('coach_id', input.coach_id)
         .eq('day_of_week', dayOfWeek);
       
@@ -409,7 +406,8 @@ export class LessonResolver {
           avail.start_time,
           avail.end_time,
           durationMinutes,
-          existingLessons || []
+          existingLessons || [],
+          avail.timezone
         );
         availableSlots.push(...slots);
       }
@@ -426,19 +424,45 @@ export class LessonResolver {
     availabilityStart: string,
     availabilityEnd: string,
     durationMinutes: number,
-    existingLessons: any[]
+    existingLessons: any[],
+    timezone?: string
   ): TimeSlot[] {
     const slots: TimeSlot[] = [];
+    console.log('Generating time slots for:', date);
+    console.log('Availability start:', availabilityStart);
+    console.log('Availability end:', availabilityEnd);
+    console.log('Timezone:', timezone);
+    console.log('Duration minutes:', durationMinutes);
+    console.log('Existing lessons:', existingLessons); 
     
-    // Parse availability times
-    const [startHour, startMinute] = availabilityStart.split(':').map(Number);
-    const [endHour, endMinute] = availabilityEnd.split(':').map(Number);
+    // Parse availability times and handle timezone properly
+    let availabilityStartTime: Date;
+    let availabilityEndTime: Date;
     
-    const availabilityStartTime = new Date(date);
-    availabilityStartTime.setHours(startHour, startMinute, 0, 0);
+    // Handle timetz format (e.g., "09:00:00-05" or "09:00:00-05:00")
+    if (availabilityStart.includes('+') || availabilityStart.includes('-')) {
+      // Create a proper datetime string with timezone
+      const dateStr = date.toISOString().split('T')[0]; // Get YYYY-MM-DD
+      const fullStartTime = `${dateStr}T${availabilityStart}`;
+      availabilityStartTime = new Date(fullStartTime);
+    } else {
+      // Handle simple HH:MM format (assume local timezone)
+      const [hour, minute] = availabilityStart.split(':').map(Number);
+      availabilityStartTime = new Date(date);
+      availabilityStartTime.setHours(hour, minute, 0, 0);
+    }
     
-    const availabilityEndTime = new Date(date);
-    availabilityEndTime.setHours(endHour, endMinute, 0, 0);
+    if (availabilityEnd.includes('+') || availabilityEnd.includes('-')) {
+      // Create a proper datetime string with timezone
+      const dateStr = date.toISOString().split('T')[0]; // Get YYYY-MM-DD
+      const fullEndTime = `${dateStr}T${availabilityEnd}`;
+      availabilityEndTime = new Date(fullEndTime);
+    } else {
+      // Handle simple HH:MM format (assume local timezone)
+      const [hour, minute] = availabilityEnd.split(':').map(Number);
+      availabilityEndTime = new Date(date);
+      availabilityEndTime.setHours(hour, minute, 0, 0);
+    }
     
     // Generate slots in the availability window
     const currentTime = new Date(availabilityStartTime);
@@ -457,9 +481,13 @@ export class LessonResolver {
       });
       
       if (!hasConflict) {
+        // Create full datetime strings with proper timezone handling
+        const startTimeStr = slotStart.toISOString();
+        const endTimeStr = slotEnd.toISOString();
+        
         slots.push(new TimeSlot(
-          slotStart.toISOString(),
-          slotEnd.toISOString(),
+          startTimeStr,
+          endTimeStr,
           durationMinutes
         ));
       }
