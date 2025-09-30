@@ -15,7 +15,9 @@ export class CoachResolver {
   @Mutation(() => Coach)
   async becomeCoach(
     @Ctx() context: Context,
-    @Arg("bio") bio: string
+    @Arg("bio") bio: string,
+    @Arg("name") name: string,
+    @Arg("location") location: string
   ): Promise<Coach> {
     try {
       // Check if user is already a coach
@@ -27,6 +29,19 @@ export class CoachResolver {
       
       if (!checkError && existingCoach) {
         throw new Error('You are already a coach.');
+      }
+
+      // Update user profile with name and location
+      const { error: userError } = await supabaseAdmin
+        .from('users')
+        .update({
+          name: name,
+          location: location
+        })
+        .eq('id', context.user.id);
+      
+      if (userError) {
+        throw new Error('Failed to update user profile');
       }
 
       // Create coach entry
