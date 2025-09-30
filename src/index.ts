@@ -51,12 +51,12 @@ async function startServer() {
       // Extract user from authorization header
       let user = null;
       const authHeader = req.headers.authorization;
+      console.log('authHeader:', authHeader);
       
       if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
           const token = authHeader.substring(7); // Remove 'Bearer ' prefix
           const { data: { user: authUser }, error } = await supabase.auth.getUser(token);
-          
           if (!error && authUser) {
             // Get the user's database record from auth ID
             const { data: dbUser, error: dbError } = await supabaseAdmin

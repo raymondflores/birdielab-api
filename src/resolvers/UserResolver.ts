@@ -30,9 +30,11 @@ export class UserResolver {
         user.id,
         user.auth_id,
         user.name,
-        user.location,
+        user.country,
         user.handicap,
-        user.created_at
+        user.created_at,
+        user.city || undefined,
+        user.state || undefined
       ) : null;
       
     } catch (error) {
@@ -45,7 +47,9 @@ export class UserResolver {
   async updateUser(
     @Ctx() context: Context,
     @Arg("name", { nullable: true }) name?: string,
-    @Arg("location", { nullable: true }) location?: string,
+    @Arg("city", { nullable: true }) city?: string,
+    @Arg("state", { nullable: true }) state?: string,
+    @Arg("country", { nullable: true }) country?: string,
     @Arg("handicap", () => Int, { nullable: true }) handicap?: number
   ): Promise<User | null> {    
     try {      
@@ -53,7 +57,9 @@ export class UserResolver {
       const updateData: any = {};
       
       if (name !== undefined) updateData.name = name;
-      if (location !== undefined) updateData.location = location;
+      if (city !== undefined) updateData.city = city;
+      if (state !== undefined) updateData.state = state;
+      if (country !== undefined) updateData.country = country;
       if (handicap !== undefined) updateData.handicap = handicap;
       
       // Check if user exists, if not create it
@@ -87,7 +93,9 @@ export class UserResolver {
         const userData = {
           auth_id: context.user.auth_id,
           name: name,
-          location: location,
+          city: city,
+          state: state,
+          country: country,
           handicap: handicap,
         };
         
@@ -108,9 +116,11 @@ export class UserResolver {
         result.id,
         result.auth_id,
         result.name,
-        result.location,
+        result.country,
         result.handicap,
-        result.created_at
+        result.created_at,
+        result.city || undefined,
+        result.state || undefined
       ) : null;
       
     } catch (error) {
@@ -152,7 +162,9 @@ export class UserResolver {
           id,
           auth_id,
           name,
-          location,
+          city,
+          state,
+          country,
           handicap,
           created_at,
           coaches!inner(
@@ -173,9 +185,11 @@ export class UserResolver {
         user.id,
         user.auth_id,
         user.name,
-        user.location,
+        user.country,
         user.handicap,
-        user.created_at
+        user.created_at,
+        user.city || undefined,
+        user.state || undefined
       ));
       
     } catch (error) {

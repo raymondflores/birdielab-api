@@ -560,9 +560,11 @@ export class LessonResolver {
         user.id,
         user.auth_id,
         user.name,
-        user.location,
+        user.country,
         user.handicap,
-        user.created_at
+        user.created_at,
+        user.city || undefined,
+        user.state || undefined
       );
     } catch (error) {
       return null;
@@ -586,9 +588,11 @@ export class LessonResolver {
         student.id,
         student.auth_id,
         student.name,
-        student.location,
+        student.country,
         student.handicap,
-        student.created_at
+        student.created_at,
+        student.city || undefined,
+        student.state || undefined
       );
     } catch (error) {
       return null;

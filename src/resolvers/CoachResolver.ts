@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Arg, Ctx, Authorized } from "type-graphql";
+import { Resolver, Query, Mutation, Arg, Ctx, Authorized, Int } from "type-graphql";
 import { Coach } from "../entities/Coach";
 import { User } from "../entities/User";
 import { supabaseAdmin } from "../config/supabase";
@@ -17,7 +17,9 @@ export class CoachResolver {
     @Ctx() context: Context,
     @Arg("bio") bio: string,
     @Arg("name") name: string,
-    @Arg("location") location: string
+    @Arg("country") country: string,
+    @Arg("city", { nullable: true }) city?: string,
+    @Arg("state", { nullable: true }) state?: string
   ): Promise<Coach> {
     try {
       // Check if user is already a coach
@@ -31,13 +33,18 @@ export class CoachResolver {
         throw new Error('You are already a coach.');
       }
 
-      // Update user profile with name and location
+      // Update user profile with name and location fields
+      const updateData: any = {
+        name: name,
+        country: country
+      };
+      
+      if (city !== undefined) updateData.city = city;
+      if (state !== undefined) updateData.state = state;
+      
       const { error: userError } = await supabaseAdmin
         .from('users')
-        .update({
-          name: name,
-          location: location
-        })
+        .update(updateData)
         .eq('id', context.user.id);
       
       if (userError) {
@@ -74,9 +81,33 @@ export class CoachResolver {
   @Mutation(() => Coach, { nullable: true })
   async updateCoachProfile(
     @Ctx() context: Context,
-    @Arg("bio") bio: string
+    @Arg("bio") bio: string,
+    @Arg("name", { nullable: true }) name?: string,
+    @Arg("city", { nullable: true }) city?: string,
+    @Arg("state", { nullable: true }) state?: string,
+    @Arg("country", { nullable: true }) country?: string,
+    @Arg("handicap", () => Int, { nullable: true }) handicap?: number
   ): Promise<Coach | null> {
     try {
+      // Update user profile if any user fields provided
+      if (name !== undefined || city !== undefined || state !== undefined || country !== undefined || handicap !== undefined) {
+        const userUpdateData: any = {};
+        if (name !== undefined) userUpdateData.name = name;
+        if (city !== undefined) userUpdateData.city = city;
+        if (state !== undefined) userUpdateData.state = state;
+        if (country !== undefined) userUpdateData.country = country;
+        if (handicap !== undefined) userUpdateData.handicap = handicap;
+        
+        const { error: userError } = await supabaseAdmin
+          .from('users')
+          .update(userUpdateData)
+          .eq('id', context.user.id);
+        
+        if (userError) {
+          throw new Error('Failed to update user profile');
+        }
+      }
+
       // Update coach bio
       const { data: coach, error: coachError } = await supabaseAdmin
         .from('coaches')
@@ -149,9 +180,11 @@ export class CoachResolver {
         student.id,
         student.auth_id,
         student.name,
-        student.location,
+        student.country,
         student.handicap,
-        student.created_at
+        student.created_at,
+        student.city || undefined,
+        student.state || undefined
       ));
       
     } catch (error) {

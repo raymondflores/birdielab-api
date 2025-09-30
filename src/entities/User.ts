@@ -12,8 +12,14 @@ export class User {
   @Field()
   name: string;
 
-  @Field()
-  location: string;
+  @Field({ nullable: true })
+  city?: string;
+
+  @Field({ nullable: true })
+  state?: string;
+
+  @Field({ nullable: true })
+  country?: string;
 
   @Field(() => Int)
   handicap: number;
@@ -24,12 +30,14 @@ export class User {
   @Field(() => Coach, { nullable: true })
   coach?: Coach;
 
-  constructor(id: string, auth_id: string, name: string, location: string, handicap: number, created_at: string) {
+  constructor(id: string, auth_id: string, name: string, country: string, handicap: number, created_at: string, city?: string, state?: string) {
     this.id = id;
     this.auth_id = auth_id;
     this.name = name;
-    this.location = location;
+    this.country = country;
     this.handicap = handicap;
     this.created_at = created_at;
+    this.city = city;
+    this.state = state;
   }
 }
