@@ -7,7 +7,7 @@ import { UserResolver } from "./resolvers/UserResolver";
 import { CoachResolver } from "./resolvers/CoachResolver";
 import { CoachAvailabilityResolver } from "./resolvers/CoachAvailabilityResolver";
 import { LessonResolver } from "./resolvers/LessonResolver";
-import { supabase } from "./config/supabase";
+import { supabase, supabaseAdmin } from "./config/supabase";
 import dotenv from "dotenv";
 
 // Load environment variables
@@ -57,8 +57,19 @@ async function startServer() {
           const { data: { user: authUser }, error } = await supabase.auth.getUser(token);
           
           if (!error && authUser) {
-            user = authUser;
-            console.log('User authenticated in context:', user.id, user.email);
+            // Get the user's database record from auth ID
+            const { data: dbUser, error: dbError } = await supabaseAdmin
+              .from('users')
+              .select('*')
+              .eq('auth_id', authUser.id)
+              .single();
+            
+            if (!dbError && dbUser) {
+              user = dbUser; // Replace with database user data
+              console.log('User authenticated in context:', user.id, user.email);
+            } else {
+              console.log('User not found in database:', dbError?.message);
+            }
           } else {
             console.log('Authentication failed in context:', error?.message);
           }

@@ -6,7 +6,7 @@ import { Request } from "express";
 
 interface Context {
   req: Request;
-  user: any;
+  user: any; // Database user object
 }
 
 @Resolver(User)
@@ -19,7 +19,7 @@ export class UserResolver {
       const { data: user, error: userError } = await supabaseAdmin
         .from('users')
         .select('*')
-        .eq('auth_id', context.user.id)
+        .eq('id', context.user.id)
         .single();
       
       if (userError) {
@@ -60,7 +60,7 @@ export class UserResolver {
       const { data: existingUser, error: fetchError } = await supabaseAdmin
         .from('users')
         .select('*')
-        .eq('auth_id', context.user.id)
+        .eq('id', context.user.id)
         .single();
       
       if (fetchError && fetchError.code !== 'PGRST116') {
@@ -73,7 +73,7 @@ export class UserResolver {
         const { data, error } = await supabaseAdmin
           .from('users')
           .update(updateData)
-          .eq('auth_id', context.user.id)
+          .eq('id', context.user.id)
           .select()
           .single();
         
@@ -85,7 +85,7 @@ export class UserResolver {
       } else {
         // Create new user
         const userData = {
-          auth_id: context.user.id,
+          auth_id: context.user.auth_id,
           name: name,
           location: location,
           handicap: handicap,
@@ -146,17 +146,6 @@ export class UserResolver {
   @Query(() => [User])
   async coaches(@Ctx() context: Context): Promise<User[]> {
     try {
-      // First get the current user to exclude them from results
-      const { data: currentUser, error: userError } = await supabaseAdmin
-        .from('users')
-        .select('id')
-        .eq('auth_id', context.user.id)
-        .single();
-      
-      if (userError || !currentUser) {
-        throw new Error('User not found.');
-      }
-
       const { data: users, error } = await supabaseAdmin
         .from('users')
         .select(`
@@ -173,7 +162,7 @@ export class UserResolver {
             created_at
           )
         `)
-        .neq('id', currentUser.id) // Exclude current user
+        .neq('id', context.user.id) // Exclude current user
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -193,4 +182,5 @@ export class UserResolver {
       throw new Error(error instanceof Error ? error.message : 'Failed to fetch coach users');
     }
   }
+
 }

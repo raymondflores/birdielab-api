@@ -8,7 +8,7 @@ import { Request } from "express";
 
 interface Context {
   req: Request;
-  user: any;
+  user: any; // Database user object
 }
 
 @Resolver(Lesson)
@@ -20,16 +20,6 @@ export class LessonResolver {
     @Arg("input") input: CreateLessonInput
   ): Promise<Lesson> {
     try {
-      // First get the current user
-      const { data: currentUser, error: userError } = await supabaseAdmin
-        .from('users')
-        .select('id')
-        .eq('auth_id', context.user.id)
-        .single();
-      
-      if (userError || !currentUser) {
-        throw new Error('User not found. Please create a profile first.');
-      }
 
       // Validate that the coach exists
       const { data: coach, error: coachError } = await supabaseAdmin
@@ -69,7 +59,7 @@ export class LessonResolver {
       const { data: studentOverlappingLessons } = await supabaseAdmin
         .from('lessons')
         .select('id')
-        .eq('student_id', currentUser.id)
+        .eq('student_id', context.user.id)
         .or(`and(start_time.lt.${input.end_time},end_time.gt.${input.start_time})`);
       
       if (studentOverlappingLessons && studentOverlappingLessons.length > 0) {
@@ -81,7 +71,7 @@ export class LessonResolver {
         .from('lessons')
         .insert({
           coach_id: input.coach_id, // Use the original coach_id
-          student_id: currentUser.id,
+          student_id: context.user.id,
           start_time: input.start_time,
           end_time: input.end_time,
           status: LessonStatus.PENDING
@@ -118,16 +108,6 @@ export class LessonResolver {
     @Arg("input") input: UpdateLessonInput
   ): Promise<Lesson | null> {
     try {
-      // First get the current user
-      const { data: currentUser, error: userError } = await supabaseAdmin
-        .from('users')
-        .select('id')
-        .eq('auth_id', context.user.id)
-        .single();
-      
-      if (userError || !currentUser) {
-        throw new Error('User not found.');
-      }
 
       // Verify ownership of the lesson (student or coach)
       const { data: existingLesson, error: checkError } = await supabaseAdmin
@@ -140,7 +120,19 @@ export class LessonResolver {
         throw new Error('Lesson not found');
       }
       
-      if (existingLesson.student_id !== currentUser.id && existingLesson.coach_id !== currentUser.id) {
+      // Check if user is the student
+      const isStudent = existingLesson.student_id === context.user.id;
+      
+      // Check if user is the coach
+      const { data: coach, error: coachError } = await supabaseAdmin
+        .from('coaches')
+        .select('id')
+        .eq('user_id', context.user.id)
+        .single();
+      
+      const isCoach = !coachError && coach && existingLesson.coach_id === coach.id;
+      
+      if (!isStudent && !isCoach) {
         throw new Error('You can only update your own lessons');
       }
 
@@ -198,16 +190,6 @@ export class LessonResolver {
     @Arg("id") id: string
   ): Promise<boolean> {
     try {
-      // First get the current user
-      const { data: currentUser, error: userError } = await supabaseAdmin
-        .from('users')
-        .select('id')
-        .eq('auth_id', context.user.id)
-        .single();
-      
-      if (userError || !currentUser) {
-        throw new Error('User not found.');
-      }
 
       // Verify ownership of the lesson
       const { data: existingLesson, error: checkError } = await supabaseAdmin
@@ -220,7 +202,22 @@ export class LessonResolver {
         throw new Error('Lesson not found');
       }
       
-      if (existingLesson.student_id !== currentUser.id && existingLesson.coach_id !== currentUser.id) {
+      // Check if user is the student
+      const isStudent = existingLesson.student_id === context.user.id;
+      
+      // Check if user is the coach
+      const { data: coach, error: coachError } = await supabaseAdmin
+        .from('coaches')
+        .select('id')
+        .eq('user_id', context.user.id)
+        .single();
+      
+      const isCoach = !coachError && coach && existingLesson.coach_id === coach.id;
+
+      console.log('isStudent', isStudent);
+      console.log('isCoach', isCoach);
+      
+      if (!isStudent && !isCoach) {
         throw new Error('You can only cancel your own lessons');
       }
 
@@ -300,22 +297,11 @@ export class LessonResolver {
     @Ctx() context: Context
   ): Promise<Lesson[]> {
     try {
-      // First get the current user
-      const { data: currentUser, error: userError } = await supabaseAdmin
-        .from('users')
-        .select('id')
-        .eq('auth_id', context.user.id)
-        .single();
-      
-      if (userError || !currentUser) {
-        throw new Error('User not found.');
-      }
-
       // Get lessons where user is the student
       const { data: lessons, error } = await supabaseAdmin
         .from('lessons')
         .select('*')
-        .eq('student_id', currentUser.id)
+        .eq('student_id', context.user.id)
         .order('start_time');
       
       if (error) {
@@ -344,22 +330,11 @@ export class LessonResolver {
     @Ctx() context: Context
   ): Promise<Lesson[]> {
     try {
-      // First get the current user
-      const { data: currentUser, error: userError } = await supabaseAdmin
-        .from('users')
-        .select('id')
-        .eq('auth_id', context.user.id)
-        .single();
-      
-      if (userError || !currentUser) {
-        throw new Error('User not found.');
-      }
-
       // Check if the user is a coach
       const { data: coach, error: coachError } = await supabaseAdmin
         .from('coaches')
         .select('id')
-        .eq('user_id', currentUser.id)
+        .eq('user_id', context.user.id)
         .single();
       
       if (coachError || !coach) {

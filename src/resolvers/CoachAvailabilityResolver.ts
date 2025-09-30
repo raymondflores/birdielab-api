@@ -6,7 +6,7 @@ import { Request } from "express";
 
 interface Context {
   req: Request;
-  user: any;
+  user: any; // Database user object
 }
 
 @Resolver(CoachAvailability)
@@ -22,7 +22,7 @@ export class CoachAvailabilityResolver {
       const { data: profile, error: profileError } = await supabaseAdmin
         .from('users')
         .select('id')
-        .eq('auth_id', context.user.id)
+        .eq('id', context.user.id)
         .single();
       
       if (profileError || !profile) {
@@ -121,7 +121,7 @@ export class CoachAvailabilityResolver {
       const { data: profile, error: profileError } = await supabaseAdmin
         .from('users')
         .select('id')
-        .eq('auth_id', context.user.id)
+        .eq('id', context.user.id)
         .single();
       
       if (profileError || !profile) {
@@ -217,7 +217,7 @@ export class CoachAvailabilityResolver {
       const { data: profile, error: profileError } = await supabaseAdmin
         .from('users')
         .select('id')
-        .eq('auth_id', context.user.id)
+        .eq('id', context.user.id)
         .single();
       
       if (profileError || !profile) {
@@ -317,7 +317,7 @@ export class CoachAvailabilityResolver {
       const { data: profile, error: profileError } = await supabaseAdmin
         .from('users')
         .select('id')
-        .eq('auth_id', context.user.id)
+        .eq('id', context.user.id)
         .single();
       
       if (profileError || !profile) {
