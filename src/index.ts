@@ -7,6 +7,7 @@ import { UserResolver } from "./resolvers/UserResolver";
 import { CoachResolver } from "./resolvers/CoachResolver";
 import { CoachAvailabilityResolver } from "./resolvers/CoachAvailabilityResolver";
 import { LessonResolver } from "./resolvers/LessonResolver";
+import { UserDeviceResolver } from "./resolvers/UserDeviceResolver";
 import { supabase, supabaseAdmin } from "./config/supabase";
 import dotenv from "dotenv";
 
@@ -25,7 +26,7 @@ async function startServer() {
 
   // Build the GraphQL schema
   const schema = await buildSchema({
-    resolvers: [UserResolver, CoachResolver, CoachAvailabilityResolver, LessonResolver],
+    resolvers: [UserResolver, CoachResolver, CoachAvailabilityResolver, LessonResolver, UserDeviceResolver],
     validate: false,
     authChecker: ({ context }) => {
       // Check if user is authenticated

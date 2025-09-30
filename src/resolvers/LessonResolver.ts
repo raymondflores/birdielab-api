@@ -341,11 +341,19 @@ export class LessonResolver {
         throw new Error('User is not a coach.');
       }
 
-      // Get lessons where user is the coach
+      // Get lessons where user is the coach for the next 7 days (including today even if time has passed)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      const nextWeek = new Date();
+      nextWeek.setDate(today.getDate() + 7);
+      nextWeek.setHours(23, 59, 59, 999); // End of 7th day
+      
       const { data: lessons, error } = await supabaseAdmin
         .from('lessons')
         .select('*')
         .eq('coach_id', coach.id)
+        .gte('start_time', today.toISOString())
+        .lte('start_time', nextWeek.toISOString())
         .order('start_time');
       
       if (error) {
