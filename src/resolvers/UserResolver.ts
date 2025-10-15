@@ -1,6 +1,5 @@
-import { Resolver, Query, Mutation, Arg, Int, Ctx, Authorized, FieldResolver, Root } from "type-graphql";
+import { Resolver, Query, Mutation, Arg, Int, Ctx, Authorized } from "type-graphql";
 import { User } from "../entities/User";
-import { Coach } from "../entities/Coach";
 import { supabaseAdmin } from "../config/supabase";
 import { Request } from "express";
 
@@ -128,73 +127,5 @@ export class UserResolver {
     }
   }
 
-  @FieldResolver(() => Coach, { nullable: true })
-  async coach(@Root() user: User): Promise<Coach | null> {
-    try {
-      const { data: coach, error } = await supabaseAdmin
-        .from('coaches')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (error || !coach) {
-        return null;
-      }
-      
-      return new Coach(
-        coach.id,
-        coach.user_id,
-        coach.bio,
-        coach.created_at
-      );
-    } catch (error) {
-      return null;
-    }
-  }
-
-  @Authorized()
-  @Query(() => [User])
-  async coaches(@Ctx() context: Context): Promise<User[]> {
-    try {
-      const { data: users, error } = await supabaseAdmin
-        .from('users')
-        .select(`
-          id,
-          auth_id,
-          name,
-          city,
-          state,
-          country,
-          handicap,
-          created_at,
-          coaches!inner(
-            id,
-            user_id,
-            bio,
-            created_at
-          )
-        `)
-        .neq('id', context.user.id) // Exclude current user
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw new Error('Failed to fetch coach users');
-      }
-      
-      return users.map((user: any) => new User(
-        user.id,
-        user.auth_id,
-        user.name,
-        user.country,
-        user.handicap,
-        user.created_at,
-        user.city || undefined,
-        user.state || undefined
-      ));
-      
-    } catch (error) {
-      throw new Error(error instanceof Error ? error.message : 'Failed to fetch coach users');
-    }
-  }
 
 }

@@ -1,5 +1,4 @@
 import { ObjectType, Field, ID, Int } from "type-graphql";
-import { Coach } from "./Coach";
 
 @ObjectType()
 export class User {
@@ -26,9 +25,6 @@ export class User {
 
   @Field()
   created_at: string;
-
-  @Field(() => Coach, { nullable: true })
-  coach?: Coach;
 
   constructor(id: string, auth_id: string, name: string, country: string, handicap: number, created_at: string, city?: string, state?: string) {
     this.id = id;
