@@ -6,6 +6,7 @@ import { buildSchema } from "type-graphql";
 import { UserResolver } from "./resolvers/UserResolver";
 import { DrillResolver } from "./resolvers/DrillResolver";
 import { PracticePlanResolver } from "./resolvers/PracticePlanResolver";
+import { UserFeedbackResolver } from "./resolvers/UserFeedbackResolver";
 import { supabase, supabaseAdmin } from "./config/supabase";
 import dotenv from "dotenv";
 
@@ -24,7 +25,7 @@ async function startServer() {
 
   // Build the GraphQL schema
   const schema = await buildSchema({
-    resolvers: [UserResolver, DrillResolver, PracticePlanResolver],
+    resolvers: [UserResolver, DrillResolver, PracticePlanResolver, UserFeedbackResolver],
     validate: false,
     authChecker: ({ context }) => {
       // Check if user is authenticated
