@@ -4,6 +4,8 @@ import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express4";
 import { buildSchema } from "type-graphql";
 import { UserResolver } from "./resolvers/UserResolver";
+import { DrillResolver } from "./resolvers/DrillResolver";
+import { PracticePlanResolver } from "./resolvers/PracticePlanResolver";
 import { supabase, supabaseAdmin } from "./config/supabase";
 import dotenv from "dotenv";
 
@@ -22,7 +24,7 @@ async function startServer() {
 
   // Build the GraphQL schema
   const schema = await buildSchema({
-    resolvers: [UserResolver],
+    resolvers: [UserResolver, DrillResolver, PracticePlanResolver],
     validate: false,
     authChecker: ({ context }) => {
       // Check if user is authenticated
