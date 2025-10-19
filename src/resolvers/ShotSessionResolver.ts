@@ -1,6 +1,7 @@
 import { Resolver, Query, Mutation, FieldResolver, Root, Arg, Ctx, Authorized, InputType, Field, ID, Int, Float } from "type-graphql";
 import { ShotSession } from "../entities/ShotSession";
 import { ShotAttempt } from "../entities/ShotAttempt";
+import { TotalSessionsSummary } from "../entities/TotalSessionsSummary";
 import { supabaseAdmin } from "../config/supabase";
 import { Request } from "express";
 
@@ -125,6 +126,34 @@ export class ShotSessionResolver {
       
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to fetch shot attempts');
+    }
+  }
+
+  @Authorized()
+  @Query(() => TotalSessionsSummary, { nullable: true })
+  async totalSessionSummary(
+    @Ctx() context: Context
+  ): Promise<TotalSessionsSummary | null> {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('total_sessions_summary')
+        .select('*')
+        .eq('user_id', context.user.id)
+        .single();
+      
+      if (error || !data) {
+        return null;
+      }
+      
+      return new TotalSessionsSummary(
+        data.total_shots,
+        data.success_shots,
+        data.club_performance,
+        data.shot_type_performance
+      );
+      
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Failed to fetch total sessions summary');
     }
   }
 

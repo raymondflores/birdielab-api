@@ -6,6 +6,8 @@ import { supabaseAdmin } from "../config/supabase";
 export class DrillResolver {
   @Query(() => [Drill])
   async drills(): Promise<Drill[]> {
+    console.log('practice plans')
+
     try {
       const { data: drills, error } = await supabaseAdmin
         .from('drills')
@@ -13,6 +15,7 @@ export class DrillResolver {
         .order('created_at', { ascending: false });
       
       if (error) {
+        console.log(error)
         throw new Error('Failed to fetch drills');
       }
       

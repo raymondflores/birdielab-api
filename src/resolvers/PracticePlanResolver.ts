@@ -51,6 +51,7 @@ export class PracticePlanResolver {
 
   @Query(() => [PracticePlanDrill])
   async practicePlanDrills(@Arg("planId") planId: string): Promise<PracticePlanDrill[]> {
+    console.log('practice plans')
     try {
       const { data: drills, error } = await supabaseAdmin
         .from('practice_plan_drills')
@@ -59,6 +60,7 @@ export class PracticePlanResolver {
         .order('position', { ascending: true });
       
       if (error) {
+        console.log(error)
         throw new Error('Failed to fetch practice plan drills');
       }
       

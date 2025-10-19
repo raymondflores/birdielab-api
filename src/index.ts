@@ -51,7 +51,6 @@ async function startServer() {
       // Extract user from authorization header
       let user = null;
       const authHeader = req.headers.authorization;
-      console.log('authHeader:', authHeader);
       
       if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
