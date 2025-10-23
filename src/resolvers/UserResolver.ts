@@ -127,5 +127,37 @@ export class UserResolver {
     }
   }
 
+  @Authorized()
+  @Mutation(() => Boolean)
+  async deleteUser(@Ctx() context: Context): Promise<boolean> {
+    try {
+      const userId = context.user.id;
+      const authId = context.user.auth_id;
+
+      // First, delete the user record from the users table
+      const { error: deleteUserError } = await supabaseAdmin
+        .from('users')
+        .delete()
+        .eq('id', userId);
+
+      if (deleteUserError) {
+        console.error('Failed to delete user from database:', deleteUserError);
+        throw new Error('Failed to delete user account');
+      }
+
+      // Then, delete the auth user from Supabase Auth
+      const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(authId);
+
+      if (deleteAuthError) {
+        console.error('Failed to delete auth user:', deleteAuthError);
+        throw new Error('Failed to delete user authentication');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw new Error('Failed to delete user account');
+    }
+  }
 
 }
