@@ -66,7 +66,6 @@ async function startServer() {
             
             if (!dbError && dbUser) {
               user = dbUser; // Replace with database user data
-              console.log('User authenticated in context:', user.id, user.email);
             } else {
               console.log('User not found in database:', dbError?.message);
             }

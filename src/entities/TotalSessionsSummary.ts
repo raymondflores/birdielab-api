@@ -23,7 +23,7 @@ export class TotalSessionsSummary {
   @Field(() => Int)
   success_shots: number;
 
-  @Field(() => GraphQLJSON)
+  @Field(() => GraphQLJSON, { nullable: true })
   club_performance: Record<string, PerformanceStats>;
 
   @Field(() => GraphQLJSON)
